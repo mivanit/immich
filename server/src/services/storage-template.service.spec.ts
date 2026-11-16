@@ -55,6 +55,15 @@ describe(StorageTemplateService.name, () => {
         }),
       ).toThrow(/Invalid storage template.*/);
     });
+
+    it.each(['{{ascii modle}}', '{{ascii}}'])('should fail for an invalid ascii helper usage: %s', (template) => {
+      expect(() =>
+        sut.onConfigValidate({
+          newConfig: { storageTemplate: { template } } as SystemConfig,
+          oldConfig: {} as SystemConfig,
+        }),
+      ).toThrow(/Invalid storage template/);
+    });
   });
 
   describe('getStorageTemplateOptions', () => {
@@ -255,6 +264,34 @@ describe(StorageTemplateService.name, () => {
       expect(mocks.move.create).toHaveBeenCalledWith({
         entityId: asset.id,
         newPath: `/data/library/${user.id}/....sibling/ab/XF27mm F2.8/${asset.originalFileName}`,
+        oldPath: asset.originalPath,
+        pathType: AssetPathType.Original,
+      });
+    });
+
+    it('should apply the ascii helper', async () => {
+      const user = UserFactory.create();
+      const asset = AssetFactory.from({ originalFileName: 'Zoë café (1).jpg' })
+        .owner(user)
+        .exif({ make: 'NIKON CORPORATION', model: 'Canon EOS 5D Mark IV', lensModel: 'XF27mm F2.8 R WR' })
+        .build();
+      const album = AlbumFactory.from({ albumName: "Mom & Dad's 80th" })
+        .asset({}, (builder) => builder.exif())
+        .build();
+      const config = structuredClone(defaults);
+      config.storageTemplate.template =
+        '{{ascii album}}/{{ascii make}}/{{ascii model}}/{{ascii lensModel}}/{{model}}/{{ascii filename}}';
+      sut.onConfigInit({ newConfig: config });
+
+      mocks.user.get.mockResolvedValue(user);
+      mocks.assetJob.getForStorageTemplateJob.mockResolvedValueOnce(getForStorageTemplate(asset));
+      mocks.album.getByAssetId.mockResolvedValueOnce([getForAlbum(album)]);
+
+      expect(await sut.handleMigrationSingle({ id: asset.id })).toBe(JobStatus.Success);
+
+      expect(mocks.move.create).toHaveBeenCalledWith({
+        entityId: asset.id,
+        newPath: `/data/library/${user.id}/Mom_Dad_s_80th/NIKON_CORPORATION/Canon_EOS_5D_Mark_IV/XF27mm_F2.8_R_WR/Canon EOS 5D Mark IV/Zoe_cafe_1.jpg`,
         oldPath: asset.originalPath,
         pathType: AssetPathType.Original,
       });

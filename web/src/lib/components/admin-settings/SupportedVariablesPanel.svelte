@@ -52,6 +52,7 @@
         <ul>
           <li>{`{{assetId}}`} - Asset ID</li>
           <li>{`{{assetIdShort}}`} - Asset ID (last 12 characters)</li>
+          <li>{`{{ascii model}}`} - Wrap any variable to keep only A-Z a-z 0-9 _ - . (e.g. Canon_EOS_5D)</li>
         </ul>
       </div>
     </div>

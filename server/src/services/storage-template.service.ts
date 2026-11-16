@@ -56,6 +56,17 @@ const storagePresets = [
   '{{make}}/{{model}}/{{lensModel}}/{{filename}}',
 ];
 
+handlebar.registerHelper('ascii', (value: unknown) => {
+  if (typeof value !== 'string') {
+    throw new TypeError('ascii expects a template variable, e.g. {{ascii model}}');
+  }
+  return value
+    .normalize('NFKD') // split accented letters: é → e + accent mark
+    .replaceAll(/\p{M}/gu, '') // drop the accents
+    .replaceAll(/[^\dA-Za-z.-]+/g, '_') // each run of anything else → _
+    .replaceAll(/^[-_.]+|[-_.]+$/g, ''); // trim - _ . from both ends (no hidden files)
+});
+
 export interface MoveAssetMetadata {
   storageLabel: string | null;
   filename: string;

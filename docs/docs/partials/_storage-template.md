@@ -38,3 +38,5 @@ If you want to store assets in album folders, but you also have assets that do n
 ```
 {{y}}/{{#if album}}{{album}}{{else}}Other{{/if}}/{{MM}}/{{filename}}
 ```
+
+To keep only `A-Z a-z 0-9 _ - .` in a path, wrap a variable in `ascii`. Accents are removed, other characters become `_`, and leading or trailing `_ - .` are trimmed. For example, `{{ascii model}}` turns `Canon EOS 5D Mark IV` into `Canon_EOS_5D_Mark_IV`.
